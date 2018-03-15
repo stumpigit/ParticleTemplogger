@@ -53,7 +53,7 @@ String phoneReturn = "default";
 
 #define RADIO Cellular
 
-#define Version 15
+#define Version 16
 
 
 SYSTEM_MODE(MANUAL);
@@ -182,11 +182,11 @@ void loop()
 		// measure every 10 Minute
 		
 		bool isNight = false;
-		//if ((Time.hour()>=19) || (Time.hour()<3)) isNight = true;
+		if ((Time.hour()>=19) || (Time.hour()<3)) isNight = true;
 		
 		int nextCall = 600 - (((currentMinute*60)+currentSecond) % 600);
 		// during night, just du it every 30 minutes
-	    //if (isNight) nextCall = 1800 - (((currentMinute*60)+currentSecond) % 1800);
+	    	if (isNight) nextCall = 1800 - (((currentMinute*60)+currentSecond) % 1800);
 		int nextCallSeconds = nextCall;
 		
 		/*
@@ -210,7 +210,7 @@ void loop()
         int now = Time.now();
 
         //System.sleep(1000);
-        //if (isNight) System.sleep(SLEEP_MODE_SOFTPOWEROFF, nextCallSeconds);
+        if (isNight) System.sleep(SLEEP_MODE_SOFTPOWEROFF, nextCallSeconds);
 	    System.sleep(RI_UC, RISING, nextCallSeconds, SLEEP_NETWORK_STANDBY);
 	    
 	    
