@@ -66,48 +66,46 @@ void setup()
 	Serial.begin(9600);
 	Serial.printf("Zermatt Temperaturlogger");
 	
-	uCmd.setDebug(false);
-	int atResult;
-	atResult = uCmd.setSMSMode(1);
-	if(atResult == RESP_OK)
-	{
-	}
-	else
-	{
-	}
-	
-	PMIC pmic; //Initalize the PMIC class so you can call the Power Management functions below. 
-    pmic.setChargeCurrent(0,0,1,0,0,0); //Set charging current to 1024mA (512 + 512 offset)
-    pmic.setInputVoltageLimit(4840);   //Set the lowest input voltage to 4.84 volts. This keeps my 5v solar panel from operating below 4.84 volts.  
-
-
-	deleteSMSOnStart();
 		
 	if (isFirststart)
 	{
 
-	Cellular.on();
-	    	delay(1000);
-        	Cellular.connect();
-        	waitUntil(Cellular.ready);
-        
-        	//Particle.connect();
-        
-        	Particle.connect();
-        	waitUntil(Particle.connected);
-        	Particle.process();
+	    Cellular.on();
+    	delay(1000);
+    	Cellular.connect();
+    	waitUntil(Cellular.ready);
+    
+    	//Particle.connect();
+    
+    	Particle.connect();
+    	waitUntil(Particle.connected);
+    	Particle.process();
 
-			Serial.printf("Time not good");
-			Particle.syncTime();
-			// Wait until Electron receives time from Particle Cloud (or connection to Particle Cloud is lost)
-			waitUntil(Particle.syncTimeDone);
-			Serial.printf("Time is good");
+		Serial.printf("Time not good");
+		Particle.syncTime();
+		// Wait until Electron receives time from Particle Cloud (or connection to Particle Cloud is lost)
+		waitUntil(Particle.syncTimeDone);
+		Serial.printf("Time is good");
 
 
-		if (!Time.isValid())
-		{
-	    	
-		}
+
+    	uCmd.setDebug(false);
+    	int atResult;
+    	atResult = uCmd.setSMSMode(1);
+    	if(atResult == RESP_OK)
+    	{
+    	}
+    	else
+    	{
+    	}
+    	
+    	PMIC pmic; //Initalize the PMIC class so you can call the Power Management functions below. 
+        pmic.setChargeCurrent(0,0,1,0,0,0); //Set charging current to 1024mA (512 + 512 offset)
+        pmic.setInputVoltageLimit(4840);   //Set the lowest input voltage to 4.84 volts. This keeps my 5v solar panel from operating below 4.84 volts.  
+    
+    
+    	deleteSMSOnStart();
+
 
 		isFirststart = false;
 	}
@@ -116,6 +114,7 @@ void setup()
 
 void loop()
 {
+    wd.checkin();
 	Cellular.on();		
 	delay(1000);
 	// Read the next available 1-Wire temperature sensor
@@ -186,7 +185,7 @@ void loop()
 		
 		int nextCall = 600 - (((currentMinute*60)+currentSecond) % 600);
 		// during night, just du it every 30 minutes
-	    	if (isNight) nextCall = 1800 - (((currentMinute*60)+currentSecond) % 1800);
+	    if (isNight) nextCall = 1800 - (((currentMinute*60)+currentSecond) % 1800);
 		int nextCallSeconds = nextCall;
 		
 		/*
@@ -424,6 +423,7 @@ void smsRecvCheck()
             deleteSMSOnStart();
         }
         if (reset) {
+            isFirststart=true;
             System.reset();
         }
         
