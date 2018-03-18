@@ -209,7 +209,7 @@ void loop()
         int now = Time.now();
 
         //System.sleep(1000);
-        if (isNight) System.sleep(SLEEP_MODE_SOFTPOWEROFF, nextCallSeconds);
+        //if (isNight) System.sleep(SLEEP_MODE_SOFTPOWEROFF, nextCallSeconds);
 	    System.sleep(RI_UC, RISING, nextCallSeconds, SLEEP_NETWORK_STANDBY);
 	    
 	    
