@@ -53,7 +53,7 @@ String phoneReturn = "default";
 
 #define RADIO Cellular
 
-#define Version 16
+#define Version 2
 
 
 SYSTEM_MODE(MANUAL);
@@ -63,17 +63,21 @@ ApplicationWatchdog wd(10800000, System.reset);
 
 void setup()
 {
+    
 	Serial.begin(9600);
+	
+	Cellular.on();
+    	delay(1000);
+    	Cellular.connect();
+    	waitUntil(Cellular.ready);
+	
 	Serial.printf("Zermatt Temperaturlogger");
 	
 		
 	if (isFirststart)
 	{
 
-	    Cellular.on();
-    	delay(1000);
-    	Cellular.connect();
-    	waitUntil(Cellular.ready);
+	    
     
     	//Particle.connect();
     
@@ -116,10 +120,14 @@ void loop()
 {
     wd.checkin();
 	Cellular.on();		
-	delay(1000);
+	
+	Serial.printf("Im Loop");
+	for (int i = 0; i<5; i++) {
+		    if (sensor.read()) i=6;
+		}
+	
 	// Read the next available 1-Wire temperature sensor
-	if (sensor.read())
-	{
+	
 		tempC = sensor.celsius();
 		if (tempC == 0.0)
 		{
@@ -182,6 +190,7 @@ void loop()
 		
 		bool isNight = false;
 		if ((Time.hour()>=19) || (Time.hour()<3)) isNight = true;
+		if (fuel.getSoC()<15) isNight = true;
 		
 		int nextCall = 600 - (((currentMinute*60)+currentSecond) % 600);
 		// during night, just du it every 30 minutes
@@ -219,6 +228,9 @@ void loop()
 	        smsAvailableFlag = 1;
 	        smsRecvCheck();
 	    }
+	    //else if (smsAvailableFlag==1) smsRecvCheck();
+	    
+	    
 	    /*
 	
 	if (!success) uCmd.sendMessage("Konnte counter nicht schreiben","+41787210818",10000);
@@ -235,7 +247,7 @@ void loop()
 		// If sensor.read() didn't return true you can try again later
 		// This next block helps debug what's wrong.
 		// It's not needed for the sensor to work properly
-	}
+	
 
 }
 
@@ -334,6 +346,7 @@ void smsRecvCheck()
     bool sendSMS = false;
     bool deleteSMS = false;
     bool reset = false;
+    bool sendStatusSMS = false;
     //String sendBackTo = "";
     char sendBackTo[20];
     Cellular.on();
@@ -366,6 +379,14 @@ void smsRecvCheck()
     			}
     			if (messageText == "sms") {
     			    sendSMS = true;
+    			    for(int i=0; i<20; i++)
+                    {
+                      sendBackTo[i] = uCmd.smsPtr->phone[i];
+                    }
+    			    //sendBackTo = uCmd.smsPtr->phone;
+    			}
+    			if (messageText == "status") {
+    			    sendStatusSMS = true;
     			    for(int i=0; i<20; i++)
                     {
                       sendBackTo[i] = uCmd.smsPtr->phone[i];
@@ -416,7 +437,19 @@ void smsRecvCheck()
             char smstext[160];
             char numberChar[12]; //+41787210818
             //sendBackTo.toCharArray(numberChar,12);
-            sprintf(smstext,"T1: %.2f T2: %.2f Bat: %0.3f %d",tempC1, tempC3, bat, Version);
+            sprintf(smstext,"T1: %.2f T2: %.2f Bat: %0.3f",tempC1, tempC3, bat);
+            uCmd.sendMessage(smstext,sendBackTo,10000);
+        }
+        if (sendStatusSMS) {
+            float vcell = fuel.getVCell();
+            bat = fuel.getSoC();
+            
+            CellularSignal sig = Cellular.RSSI();
+            
+            char smstext[160];
+            char numberChar[12]; //+41787210818
+            //sendBackTo.toCharArray(numberChar,12);
+            sprintf(smstext,"Bat: %.2f BatV: %.2f Sig: %d, %d %d",bat, vcell, sig.rssi, sig.qual, Version);
             uCmd.sendMessage(smstext,sendBackTo,10000);
         }
         if (deleteSMS) {
